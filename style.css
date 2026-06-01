@@ -851,12 +851,17 @@ button {
 
 /* Responsive adjustments for mobile */
 @media (max-width: 768px) {
+    .screen {
+        align-items: flex-start;
+    }
+
     .review-container {
         flex-direction: column;
         overflow-y: auto;
         height: 100%;
         width: 100%;
         padding: 1rem;
+        justify-content: flex-start;
     }
     
     .preview-area {
@@ -874,6 +879,7 @@ button {
     .action-buttons {
         flex-direction: column;
         width: 100%;
+        margin-bottom: 4rem; /* Extra space for scrolling at bottom */
     }
     
     .theme-section .layout-grid {
