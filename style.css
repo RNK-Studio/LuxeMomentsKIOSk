@@ -2,8 +2,8 @@
     /* Color Palette - Premium Dark Theme */
     --bg-dark: #0f172a;
     --bg-darker: #020617;
-    --primary: #ec4899;
-    --primary-hover: #db2777;
+    --primary: #1e3a8a;
+    --primary-hover: #1e40af;
     --secondary: #3b82f6;
     --accent: #8b5cf6;
     --text-main: #f8fafc;
@@ -70,7 +70,7 @@ h1, h2, h3 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 1rem;
-    filter: drop-shadow(0 0 20px rgba(236, 72, 153, 0.3));
+    filter: drop-shadow(0 0 20px rgba(30, 58, 138, 0.4));
 }
 
 .subtitle {
@@ -747,7 +747,7 @@ button {
 
 .bg-preview.none { background: linear-gradient(135deg, #1e293b, #0f172a); }
 .bg-preview.classic { background: radial-gradient(circle, #f1f5f9 10%, #64748b 90%); }
-.bg-preview.neon { background: linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6); }
+.bg-preview.neon { background: linear-gradient(45deg, #1e3a8a, #8b5cf6, #3b82f6); }
 .bg-preview.pastel { background: linear-gradient(135deg, #ffc8dd, #ffafcc, #bde0fe); }
 .bg-preview.tropical { background: linear-gradient(180deg, #fdba74, #f97316, #a855f7); }
 .bg-preview.disco { background: radial-gradient(circle, #ffe4e6, #db2777, #4c0519); }
@@ -1239,3 +1239,55 @@ button {
     }
 }
 
+/* ============================================================
+   FACE DETECTION OVERLAY
+   ============================================================ */
+.face-overlay-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Smart Tools / Detect Face section */
+.detect-face-section {
+    margin-top: 0.75rem;
+}
+
+.detect-face-section h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+}
+
+.toggle-face-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.toggle-face-btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: var(--primary);
+}
+
+.toggle-face-btn.active {
+    background: rgba(30, 58, 138, 0.3);
+    border-color: var(--primary);
+    color: #93c5fd;
+}

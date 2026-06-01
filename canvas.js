@@ -55,6 +55,13 @@ window.canvasHandler = {
     },
 
     async loadBackground() {
+        // If theme is 'none', clear the background image and bail
+        if (!window.app.config.customBgUrl && window.app.state.theme === 'none') {
+            this.bgImage = null;
+            if (this.ctx && this.loadedImages.length > 0) this.applyFilterAndLayout();
+            return;
+        }
+
         let bgSrc = 'bg.png'; // default
         
         if (window.app.config.customBgUrl) {
@@ -88,6 +95,7 @@ window.canvasHandler = {
     changeTheme() {
         this.loadBackground();
     },
+
 
     applyFilterAndLayout() {
         const layout = window.app.state.layout;
@@ -287,7 +295,7 @@ window.canvasHandler = {
         
         if (bgName === 'neon') {
             const grad = ctx.createLinearGradient(0, 0, w, h);
-            grad.addColorStop(0, '#ec4899');
+            grad.addColorStop(0, '#1e3a8a');
             grad.addColorStop(0.5, '#8b5cf6');
             grad.addColorStop(1, '#3b82f6');
             ctx.fillStyle = grad;
@@ -451,7 +459,7 @@ window.canvasHandler = {
         } else if (window.app.state.layout === 'collage') {
             this.ctx.font = 'bold 70px Outfit';
             this.ctx.fillStyle = '#fff';
-            this.ctx.shadowColor = '#ec4899';
+            this.ctx.shadowColor = '#1e3a8a';
             this.ctx.shadowBlur = 10;
             this.ctx.shadowOffsetX = 3;
             this.ctx.shadowOffsetY = 3;

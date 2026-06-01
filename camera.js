@@ -5,14 +5,30 @@ window.cameraHandler = {
     stream: null,
     videoEl: null,
     canvasEl: null,
+    faceOverlayEl: null,
     countdownEl: null,
     isCapturing: false,
     isStreaming: false,
+    faceDetectEnabled: false,
+    faceDetector: null,
+    lastFaces: [],
 
     async start() {
         this.videoEl = document.getElementById('camera-feed');
         this.canvasEl = document.getElementById('camera-canvas');
+        this.faceOverlayEl = document.getElementById('face-overlay');
         this.countdownEl = document.getElementById('countdown-overlay');
+
+        // Initialize FaceDetector if available
+        if ('FaceDetector' in window) {
+            try {
+                this.faceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 5 });
+                console.log('FaceDetector API available.');
+            } catch(e) {
+                this.faceDetector = null;
+                console.warn('FaceDetector init failed:', e);
+            }
+        }
 
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             console.error("Camera API not supported or requires HTTPS");
@@ -86,6 +102,8 @@ window.cameraHandler = {
         }
         
         requestAnimationFrame(() => this.previewLoop());
+        // Face detection loop
+        if (this.faceDetectEnabled) this.runFaceDetectLoop();
     },
 
     applyChromaKeyToContext(ctx, w, h) {
@@ -165,7 +183,7 @@ window.cameraHandler = {
         try {
             this.isCapturing = true;
             const btnCircle = document.querySelector('.capture-btn .inner-circle');
-            if(btnCircle) btnCircle.style.backgroundColor = '#ec4899';
+            if(btnCircle) btnCircle.style.backgroundColor = '#1e3a8a';
 
             const photos = [];
             const mode = window.app.state.mode;
@@ -298,5 +316,114 @@ window.cameraHandler = {
             flash.classList.remove('flash-anim');
             flash.classList.add('hidden');
         }, 500);
+    },
+
+    // ── Face Detection ──────────────────────────────────────────────
+    setFaceDetect(enabled) {
+        this.faceDetectEnabled = enabled;
+        if (!this.faceOverlayEl) this.faceOverlayEl = document.getElementById('face-overlay');
+        if (enabled) {
+            this.faceOverlayEl && this.faceOverlayEl.classList.remove('hidden');
+            this.runFaceDetectLoop();
+        } else {
+            this.faceOverlayEl && this.faceOverlayEl.classList.add('hidden');
+            if (this.faceOverlayEl) {
+                const ctx = this.faceOverlayEl.getContext('2d');
+                ctx && ctx.clearRect(0, 0, this.faceOverlayEl.width, this.faceOverlayEl.height);
+            }
+        }
+    },
+
+    async runFaceDetectLoop() {
+        if (!this.faceDetectEnabled || !this.isStreaming) return;
+
+        const overlay = this.faceOverlayEl || document.getElementById('face-overlay');
+        if (!overlay || !this.videoEl) {
+            if (this.faceDetectEnabled) setTimeout(() => this.runFaceDetectLoop(), 200);
+            return;
+        }
+
+        // Match overlay size to the video element
+        const vw = this.videoEl.videoWidth || this.videoEl.clientWidth || 640;
+        const vh = this.videoEl.videoHeight || this.videoEl.clientHeight || 480;
+        overlay.width = vw;
+        overlay.height = vh;
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, vw, vh);
+
+        // ── Use browser FaceDetector API if available ──
+        if (this.faceDetector && this.videoEl.readyState >= 2) {
+            try {
+                const faces = await this.faceDetector.detect(this.videoEl);
+                ctx.clearRect(0, 0, vw, vh);
+                faces.forEach(face => {
+                    const { x, y, width, height } = face.boundingBox;
+                    // Mirror the X coordinate since video is mirrored via CSS
+                    const mx = vw - x - width;
+                    ctx.save();
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = Math.max(3, vw / 200);
+                    ctx.shadowColor = '#93c5fd';
+                    ctx.shadowBlur = 10;
+                    // Rounded rect guide
+                    const r = 12;
+                    ctx.beginPath();
+                    ctx.moveTo(mx + r, y);
+                    ctx.lineTo(mx + width - r, y);
+                    ctx.quadraticCurveTo(mx + width, y, mx + width, y + r);
+                    ctx.lineTo(mx + width, y + height - r);
+                    ctx.quadraticCurveTo(mx + width, y + height, mx + width - r, y + height);
+                    ctx.lineTo(mx + r, y + height);
+                    ctx.quadraticCurveTo(mx, y + height, mx, y + height - r);
+                    ctx.lineTo(mx, y + r);
+                    ctx.quadraticCurveTo(mx, y, mx + r, y);
+                    ctx.closePath();
+                    ctx.stroke();
+                    // Label badge
+                    ctx.fillStyle = 'rgba(30, 58, 138, 0.75)';
+                    ctx.fillRect(mx, y - 28, 80, 24);
+                    ctx.fillStyle = '#e0f2fe';
+                    ctx.font = `bold ${Math.max(12, vw/60)}px Inter, sans-serif`;
+                    ctx.fillText('😊 Face', mx + 6, y - 9);
+                    ctx.restore();
+                });
+                if (faces.length === 0) this.drawFaceGuide(ctx, vw, vh);
+            } catch(e) {
+                this.drawFaceGuide(ctx, vw, vh);
+            }
+        } else {
+            // ── Fallback: Draw centering guide ring ──
+            this.drawFaceGuide(ctx, vw, vh);
+        }
+
+        // Loop at ~10fps to save CPU
+        if (this.faceDetectEnabled) setTimeout(() => this.runFaceDetectLoop(), 100);
+    },
+
+    drawFaceGuide(ctx, w, h) {
+        // Draw a soft oval guide where the face should be centered
+        const cx = w / 2;
+        const cy = h * 0.42;
+        const rx = w * 0.18;
+        const ry = h * 0.30;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(147, 197, 253, 0.6)';
+        ctx.lineWidth = Math.max(3, w / 200);
+        ctx.setLineDash([12, 8]);
+        ctx.shadowColor = '#3b82f6';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        // Text hint
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(30, 58, 138, 0.75)';
+        const labelW = 200, labelH = 30;
+        ctx.fillRect(cx - labelW/2, cy + ry + 10, labelW, labelH);
+        ctx.fillStyle = '#e0f2fe';
+        ctx.font = `bold ${Math.max(12, w/60)}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Position face here', cx, cy + ry + 30);
+        ctx.restore();
     }
 };

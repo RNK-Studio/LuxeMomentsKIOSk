@@ -21,7 +21,8 @@ window.app = {
         chromaTolerance: 60,
         chromaSmoothness: 15,
         chromaColor: { r: 0, g: 255, b: 0 },
-        capturedVideoBlob: null
+        capturedVideoBlob: null,
+        faceDetectEnabled: false,  // Face detection overlay toggle
     },
     
     config: {
@@ -542,6 +543,29 @@ window.app = {
         } catch(e) {
             console.log("Audio not supported or interaction needed");
         }
+    },
+
+    toggleFaceDetect(e) {
+        if (e) e.stopPropagation();
+        this.state.faceDetectEnabled = !this.state.faceDetectEnabled;
+        const btn = document.getElementById('face-detect-toggle');
+        const lbl = document.getElementById('face-detect-label');
+        const overlay = document.getElementById('face-overlay');
+        if (this.state.faceDetectEnabled) {
+            if (btn) btn.classList.add('active');
+            if (lbl) lbl.textContent = 'Detect Face: ON';
+            if (overlay) overlay.classList.remove('hidden');
+        } else {
+            if (btn) btn.classList.remove('active');
+            if (lbl) lbl.textContent = 'Detect Face: OFF';
+            if (overlay) {
+                overlay.classList.add('hidden');
+                const ctx = overlay.getContext('2d');
+                if (ctx) ctx.clearRect(0, 0, overlay.width, overlay.height);
+            }
+        }
+        // Notify camera handler
+        if (window.cameraHandler) window.cameraHandler.setFaceDetect(this.state.faceDetectEnabled);
     }
 };
 
