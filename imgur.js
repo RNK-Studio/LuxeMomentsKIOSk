@@ -148,5 +148,21 @@ window.imgurHandler = {
             <img src="${qrUrl}" alt="QR Code to Download Photo" style="border-radius:8px; display:block; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
             <p style="font-size: 0.8rem; margin-top: 6px; color: #94a3b8;">📱 Scan to Download</p>`;
         qrContainer.classList.remove('hidden');
+
+        // Save successfully uploaded photo info to local gallery history
+        try {
+            const historyStr = localStorage.getItem('luxemoments_gallery_history') || '[]';
+            const history = JSON.parse(historyStr);
+            history.unshift({
+                url: fileUrl,
+                downloadUrl: downloadPageUrl,
+                ext: ext,
+                timestamp: Date.now()
+            });
+            localStorage.setItem('luxemoments_gallery_history', JSON.stringify(history));
+            console.log('Saved upload to event gallery history:', fileUrl);
+        } catch (e) {
+            console.error('Error saving to gallery history:', e);
+        }
     }
 };

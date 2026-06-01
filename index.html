@@ -283,20 +283,48 @@
                     <label>Event Logo URL</label>
                     <input type="text" id="setting-logo-url" placeholder="https://...">
                 </div>
-                <div class="action-buttons">
-                    <button class="secondary-btn" onclick="app.closeAdmin()">Close</button>
-                    <button class="primary-btn" onclick="app.saveAdminSettings()">Save</button>
+                <div class="action-buttons" style="flex-wrap: wrap;">
+                    <button class="secondary-btn" style="flex: 1 1 100%; margin-bottom: 0.5rem; border-color: rgba(239, 68, 68, 0.4); color: #ef4444;" onclick="app.clearGalleryHistory()">🗑️ Clear Gallery History</button>
+                    <button class="secondary-btn" style="flex: 1;" onclick="app.closeAdmin()">Close</button>
+                    <button class="primary-btn" style="flex: 1;" onclick="app.saveAdminSettings()">Save</button>
                 </div>
             </div>
         </section>
+
+        <!-- Gallery Overlay -->
+        <section id="overlay-gallery" class="overlay hidden">
+            <div class="gallery-panel glass-panel">
+                <div class="gallery-header">
+                    <h2>📸 Event Gallery</h2>
+                    <button class="icon-btn close-gallery-btn" onclick="app.closeGallery()" style="width: auto; padding: 0.5rem 1.5rem; font-size: 1.1rem; border-radius: 20px;">✕ Close</button>
+                </div>
+                <div id="gallery-grid" class="gallery-grid">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Single Item Preview Modal -->
+        <div id="gallery-item-modal" class="overlay hidden" style="z-index: 3000; background: rgba(0,0,0,0.9);">
+            <div class="glass-panel" style="max-width: min(500px, 95vw); width: min(500px, 95vw); display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2rem;">
+                <h3 style="font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 0.5rem;">Photo Preview</h3>
+                <div id="gallery-item-media" style="width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Video or Image -->
+                </div>
+                <div id="gallery-item-qr" style="display: flex; flex-direction: column; align-items: center; background: white; padding: 12px; border-radius: 12px; color: black;">
+                    <!-- QR code image -->
+                </div>
+                <button class="primary-btn" style="width: 100%; font-size: 1.2rem; padding: 1rem;" onclick="app.closeGalleryItem()">Back to Gallery</button>
+            </div>
+        </div>
         
         <!-- Flash Effect -->
         <div id="flash-effect" class="hidden"></div>
     </div>
 
-    <script src="app.js?v=18"></script>
-    <script src="camera.js?v=18"></script>
-    <script src="canvas.js?v=18"></script>
-    <script src="imgur.js?v=18"></script>
+    <script src="app.js?v=19"></script>
+    <script src="camera.js?v=19"></script>
+    <script src="canvas.js?v=19"></script>
+    <script src="imgur.js?v=19"></script>
 </body>
 </html>

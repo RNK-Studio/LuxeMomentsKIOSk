@@ -101,12 +101,138 @@ window.app = {
     openAdmin(e) {
         if(e) e.stopPropagation();
         document.getElementById('overlay-admin').classList.remove('hidden');
-        this.toggleUploadSettingsVisibility();
     },
 
     openGallery(e) {
         if(e) e.stopPropagation();
-        alert("Online Photo Gallery is coming soon! Access it via the scanned QR codes on printout.");
+        const galleryOverlay = document.getElementById('overlay-gallery');
+        const grid = document.getElementById('gallery-grid');
+        
+        if (!galleryOverlay || !grid) return;
+        
+        // Show modal
+        galleryOverlay.classList.remove('hidden');
+        
+        // Load uploads from local storage
+        let history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('luxemoments_gallery_history') || '[]');
+        } catch (err) {
+            console.error(err);
+        }
+        
+        // Clear previous grid items
+        grid.innerHTML = '';
+        
+        if (history.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; color: var(--text-muted);">
+                    <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1.5rem; opacity: 0.5;">
+                        <rect x="3" y="3" width="18" height="18" rx="4" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M20.5 15.5l-4-4a1 1 0 0 0-1.4 0l-4 4a1 1 0 0 1-1.4 0l-2-2a1 1 0 0 0-1.4 0l-3.3 3.3" />
+                    </svg>
+                    <p style="font-size: 1.2rem; font-weight: 500;">No photos taken yet!</p>
+                    <p style="font-size: 0.95rem; margin-top: 0.5rem;">Captures taken during the event will appear here.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Render item cards
+        history.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'gallery-card glass-panel';
+            
+            // Format timestamp
+            const date = new Date(item.timestamp);
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const isVideo = item.ext === 'webm' || item.ext === 'mp4';
+            
+            card.innerHTML = `
+                <div class="gallery-card-preview">
+                    ${isVideo 
+                        ? `<video src="${item.url}" muted playsinline loop></video>`
+                        : `<img src="${item.url}" alt="Capture Preview" loading="lazy">`
+                    }
+                    <div class="gallery-card-hover">Tapped to View</div>
+                </div>
+                <div class="gallery-card-info">
+                    <span class="gallery-card-time">${timeStr}</span>
+                    <span class="gallery-card-badge">${isVideo ? '🎥 Video' : (item.ext === 'gif' ? '✨ GIF' : '📸 Photo')}</span>
+                </div>
+            `;
+            
+            card.addEventListener('click', () => {
+                this.openGalleryItem(item.url, item.downloadUrl, item.ext);
+            });
+            
+            grid.appendChild(card);
+        });
+    },
+
+    closeGallery() {
+        const galleryOverlay = document.getElementById('overlay-gallery');
+        if (galleryOverlay) {
+            galleryOverlay.classList.add('hidden');
+        }
+    },
+
+    openGalleryItem(url, downloadUrl, ext) {
+        const itemModal = document.getElementById('gallery-item-modal');
+        const mediaContainer = document.getElementById('gallery-item-media');
+        const qrContainer = document.getElementById('gallery-item-qr');
+        
+        if (!itemModal || !mediaContainer || !qrContainer) return;
+        
+        mediaContainer.innerHTML = '';
+        qrContainer.innerHTML = '';
+        
+        const isVideo = ext === 'webm' || ext === 'mp4';
+        if (isVideo) {
+            const video = document.createElement('video');
+            video.src = url;
+            video.autoplay = true;
+            video.loop = true;
+            video.controls = true;
+            video.style.maxWidth = '100%';
+            video.style.maxHeight = '100%';
+            video.style.borderRadius = '12px';
+            mediaContainer.appendChild(video);
+        } else {
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            img.style.objectFit = 'contain';
+            img.style.borderRadius = '12px';
+            mediaContainer.appendChild(img);
+        }
+        
+        // Generate QR code for mobile scanning
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(downloadUrl)}`;
+        qrContainer.innerHTML = `
+            <img src="${qrUrl}" alt="Item QR Code" style="border-radius: 8px;">
+            <p style="font-size: 0.8rem; margin-top: 5px; color: var(--text-muted);">Scan to Download</p>
+        `;
+        
+        itemModal.classList.remove('hidden');
+    },
+
+    closeGalleryItem() {
+        const itemModal = document.getElementById('gallery-item-modal');
+        if (itemModal) {
+            itemModal.classList.add('hidden');
+        }
+    },
+
+    clearGalleryHistory() {
+        if (confirm("Are you sure you want to clear the entire photo gallery history? This cannot be undone.")) {
+            localStorage.removeItem('luxemoments_gallery_history');
+            alert("Gallery history cleared!");
+            this.openGallery(); // reload view
+        }
     },
 
     selectMode(mode, e) {
