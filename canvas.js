@@ -59,6 +59,10 @@ window.canvasHandler = {
         
         if (window.app.config.customBgUrl) {
             bgSrc = window.app.config.customBgUrl;
+            // Bypass CORS issues on custom background image URLs by routing through images.weserv.nl CORS proxy
+            if (bgSrc.startsWith('http')) {
+                bgSrc = `https://images.weserv.nl/?url=${encodeURIComponent(bgSrc)}`;
+            }
         } else if (window.app.state.theme === 'neon') {
             bgSrc = 'bg_neon.png';
         } else if (window.app.state.theme === 'classic') {
@@ -69,7 +73,10 @@ window.canvasHandler = {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.onload = () => resolve(img);
-            img.onerror = () => resolve(null);
+            img.onerror = (e) => {
+                console.error("Failed to load background frame image:", bgSrc, e);
+                resolve(null);
+            };
             img.src = bgSrc;
         });
         
