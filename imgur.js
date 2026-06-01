@@ -5,6 +5,24 @@
  */
 window.imgurHandler = {
 
+    // Synchronous conversion of base64 data URL to Blob to avoid browser 'Failed to fetch' errors
+    dataURLtoBlob(dataurl) {
+        try {
+            const arr = dataurl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        } catch (e) {
+            console.error("Base64 to Blob conversion failed:", e);
+            return null;
+        }
+    },
+
     async uploadPhoto(dataUrl, directBlob = null) {
         const statusIcon = document.getElementById('upload-status-icon');
         const statusText = document.getElementById('upload-status-text');
@@ -21,8 +39,11 @@ window.imgurHandler = {
 
         try {
             if (!blob && dataUrl) {
-                const res = await fetch(dataUrl);
-                blob = await res.blob();
+                // Use synchronous base64-to-blob conversion to prevent "Failed to fetch" errors on data: URIs
+                blob = this.dataURLtoBlob(dataUrl);
+                if (!blob) {
+                    throw new Error("Could not convert image data to uploadable file.");
+                }
                 mime = blob.type || 'image/jpeg';
                 if (mime.includes('gif')) ext = 'gif';
                 else if (mime.includes('png')) ext = 'png';
@@ -35,7 +56,7 @@ window.imgurHandler = {
         } catch (prepError) {
             console.error('File prep error:', prepError);
             statusIcon.innerText = '❌';
-            statusText.innerText = 'Error preparing photo blob.';
+            statusText.innerText = `Error preparing file: ${prepError.message || prepError}`;
             statusIcon.classList.remove('pulse-anim');
             return;
         }
@@ -53,7 +74,7 @@ window.imgurHandler = {
             });
 
             if (!pixeldrainRes.ok) {
-                throw new Error(`Pixeldrain response status: ${pixeldrainRes.status}`);
+                throw new Error(`Pixeldrain server returned status ${pixeldrainRes.status}`);
             }
 
             const resData = await pixeldrainRes.json();
@@ -79,14 +100,13 @@ window.imgurHandler = {
                 });
 
                 if (!tmpfilesRes.ok) {
-                    throw new Error(`Tmpfiles response status: ${tmpfilesRes.status}`);
+                    throw new Error(`Tmpfiles server returned status ${tmpfilesRes.status}`);
                 }
 
                 const tmpData = await tmpfilesRes.json();
                 if (tmpData.status === 'success' && tmpData.data && tmpData.data.url) {
                     // Tmpfiles returns a view URL like "https://tmpfiles.org/12345/file.jpg".
-                    // We convert it to a direct download URL by inserting "dl" after the domain:
-                    // "https://tmpfiles.org/dl/12345/file.jpg"
+                    // Convert to direct download by inserting "dl"
                     let directUrl = tmpData.data.url;
                     if (directUrl.includes('tmpfiles.org/')) {
                         directUrl = directUrl.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
@@ -98,7 +118,7 @@ window.imgurHandler = {
             } catch (backupError) {
                 console.error('All upload providers failed:', backupError);
                 statusIcon.innerText = '❌';
-                statusText.innerText = 'Upload Failed: Both servers are offline. Try again.';
+                statusText.innerText = `Upload Failed: ${pixeldrainError.message || 'CORS or Connection Error'}`;
                 statusIcon.classList.remove('pulse-anim');
             }
         }
