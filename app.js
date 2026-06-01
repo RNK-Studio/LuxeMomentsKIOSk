@@ -30,7 +30,9 @@ window.app = {
         folderId: localStorage.getItem('gdrive_folder_id') || '1YZ65mLsdL-rGA7S1wi4c8oxN0dRnLyhT',
         logoUrl: localStorage.getItem('event_logo_url') || '',
         eventName: localStorage.getItem('event_name') || '',
-        customBgUrl: localStorage.getItem('custom_bg_url') || ''
+        customBgUrl: localStorage.getItem('custom_bg_url') || '',
+        uploadProvider: localStorage.getItem('upload_provider') || 'imgur',
+        imgurClientId: localStorage.getItem('imgur_client_id') || ''
     },
 
     init() {
@@ -103,6 +105,7 @@ window.app = {
     openAdmin(e) {
         if(e) e.stopPropagation();
         document.getElementById('overlay-admin').classList.remove('hidden');
+        this.toggleUploadSettingsVisibility();
     },
 
     openGallery(e) {
@@ -260,8 +263,15 @@ window.app = {
             finalImage.src = collageCanvas.toDataURL('image/jpeg', 0.9);
         }
         
-        // Auto-upload to drive
-        if(window.driveHandler) {
+        // Auto-upload based on selected provider
+        const provider = this.config.uploadProvider;
+        if (provider === 'imgur' && window.imgurHandler) {
+            if (this.state.mode === 'video' && this.state.capturedVideoBlob) {
+                window.imgurHandler.uploadPhoto(null, this.state.capturedVideoBlob);
+            } else {
+                window.imgurHandler.uploadPhoto(finalImage.src);
+            }
+        } else if (provider === 'gdrive' && window.driveHandler) {
             if (this.state.mode === 'video' && this.state.capturedVideoBlob) {
                 window.driveHandler.uploadPhoto(null, this.state.capturedVideoBlob);
             } else {
@@ -360,18 +370,24 @@ window.app = {
         const logoUrl = document.getElementById('setting-logo-url').value;
         const eventName = document.getElementById('setting-event-name').value;
         const customBgUrl = document.getElementById('setting-bg-url').value;
+        const uploadProvider = document.getElementById('setting-upload-provider').value;
+        const imgurClientId = document.getElementById('setting-imgur-client-id').value;
         
         localStorage.setItem('gdrive_client_id', clientId);
         localStorage.setItem('gdrive_folder_id', folderId);
         localStorage.setItem('event_logo_url', logoUrl);
         localStorage.setItem('event_name', eventName);
         localStorage.setItem('custom_bg_url', customBgUrl);
+        localStorage.setItem('upload_provider', uploadProvider);
+        localStorage.setItem('imgur_client_id', imgurClientId);
         
         this.config.clientId = clientId;
         this.config.folderId = folderId;
         this.config.logoUrl = logoUrl;
         this.config.eventName = eventName;
         this.config.customBgUrl = customBgUrl;
+        this.config.uploadProvider = uploadProvider;
+        this.config.imgurClientId = imgurClientId;
         
         if (window.canvasHandler) window.canvasHandler.loadBackground();
         
@@ -385,6 +401,29 @@ window.app = {
         document.getElementById('setting-logo-url').value = this.config.logoUrl;
         document.getElementById('setting-event-name').value = this.config.eventName;
         document.getElementById('setting-bg-url').value = this.config.customBgUrl;
+        document.getElementById('setting-upload-provider').value = this.config.uploadProvider;
+        document.getElementById('setting-imgur-client-id').value = this.config.imgurClientId;
+        this.toggleUploadSettingsVisibility();
+    },
+
+    toggleUploadSettingsVisibility() {
+        const provider = document.getElementById('setting-upload-provider').value;
+        const imgurGroup = document.getElementById('settings-group-imgur');
+        const gdriveGroup = document.getElementById('settings-group-gdrive');
+        const gdriveFolderGroup = document.getElementById('settings-group-gdrive-folder');
+        const gdriveAuthGroup = document.getElementById('settings-group-gdrive-auth');
+
+        if (provider === 'imgur') {
+            imgurGroup.classList.remove('hidden');
+            gdriveGroup.classList.add('hidden');
+            gdriveFolderGroup.classList.add('hidden');
+            gdriveAuthGroup.classList.add('hidden');
+        } else {
+            imgurGroup.classList.add('hidden');
+            gdriveGroup.classList.remove('hidden');
+            gdriveFolderGroup.classList.remove('hidden');
+            gdriveAuthGroup.classList.remove('hidden');
+        }
     },
 
     audioCtx: null,

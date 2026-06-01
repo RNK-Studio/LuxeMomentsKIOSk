@@ -280,10 +280,21 @@
                     <input type="text" id="setting-bg-url" placeholder="https://...">
                 </div>
                 <div class="settings-group">
+                    <label>Upload Provider</label>
+                    <select id="setting-upload-provider" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-family: inherit; font-size: 0.95rem; outline: none; margin-top: 4px;" onchange="app.toggleUploadSettingsVisibility()">
+                        <option value="imgur">Imgur (No Logins - Recommended)</option>
+                        <option value="gdrive">Google Drive</option>
+                    </select>
+                </div>
+                <div id="settings-group-imgur" class="settings-group">
+                    <label>Imgur Client ID (Optional)</label>
+                    <input type="text" id="setting-imgur-client-id" placeholder="Leave blank to use default key">
+                </div>
+                <div id="settings-group-gdrive" class="settings-group">
                     <label>Google Drive OAuth Client ID</label>
                     <input type="text" id="setting-client-id" placeholder="Enter Client ID">
                 </div>
-                <div class="settings-group">
+                <div id="settings-group-gdrive-folder" class="settings-group">
                     <label>Google Drive Folder ID</label>
                     <input type="text" id="setting-folder-id" placeholder="e.g. 1YZ65mLsdL-rGA7S...">
                 </div>
@@ -291,7 +302,7 @@
                     <label>Event Logo URL</label>
                     <input type="text" id="setting-logo-url" placeholder="https://...">
                 </div>
-                <div class="settings-group">
+                <div id="settings-group-gdrive-auth" class="settings-group">
                     <button class="secondary-btn" onclick="window.driveHandler.requestAuthorization()">Authorize Google Drive</button>
                 </div>
                 <div class="action-buttons">
@@ -308,9 +319,10 @@
     <!-- Scripts -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="app.js?v=13"></script>
-    <script src="camera.js?v=13"></script>
-    <script src="canvas.js?v=13"></script>
-    <script src="drive.js?v=13"></script>
+    <script src="app.js?v=14"></script>
+    <script src="camera.js?v=14"></script>
+    <script src="canvas.js?v=14"></script>
+    <script src="drive.js?v=14"></script>
+    <script src="imgur.js?v=14"></script>
 </body>
 </html>

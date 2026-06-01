@@ -294,10 +294,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = getQueryParams();
             const fileId = params.id;
+            const fileUrl = params.url; // Support direct URL (e.g. from Imgur)
             const fileExt = (params.ext || 'jpg').toLowerCase();
 
-            if (!fileId) {
-                document.getElementById('media-container').innerHTML = '<p style="color: var(--primary); padding: 20px; text-align: center;">No photo ID provided. Please scan the QR code from the Photobooth screen.</p>';
+            if (!fileId && !fileUrl) {
+                document.getElementById('media-container').innerHTML = '<p style="color: var(--primary); padding: 20px; text-align: center;">No photo ID or URL provided. Please scan the QR code from the Photobooth screen.</p>';
                 document.getElementById('download-btn').style.display = 'none';
                 return;
             }
@@ -306,18 +307,27 @@
             const spinner = document.getElementById('loading-spinner');
             const downloadBtn = document.getElementById('download-btn');
             
-            // Set download link
-            const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            // Set download and display links
+            let downloadUrl = '';
+            let displayUrl = '';
+            
+            if (fileUrl) {
+                downloadUrl = fileUrl;
+                displayUrl = fileUrl;
+            } else {
+                downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                displayUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+            }
+
             downloadBtn.href = downloadUrl;
             
             // Tailor UI & display based on format (video vs. image/gif)
             const isVideo = fileExt === 'webm' || fileExt === 'mp4';
             
             if (isVideo) {
-                // Adjust video ratio if needed, or keep standard
                 const videoEl = document.createElement('video');
                 videoEl.className = 'preview-media';
-                videoEl.src = downloadUrl;
+                videoEl.src = displayUrl;
                 videoEl.autoplay = true;
                 videoEl.loop = true;
                 videoEl.muted = true;
@@ -341,9 +351,7 @@
                 // Image or GIF
                 const imgEl = document.createElement('img');
                 imgEl.className = 'preview-media';
-                
-                // Use Google direct image rendering endpoint (bypasses HTML wrapping, loads directly in img)
-                imgEl.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+                imgEl.src = displayUrl;
                 imgEl.alt = 'Your Photobooth Capture';
 
                 // Check aspect ratio of photo to size card preview box nicely
@@ -356,8 +364,13 @@
                 };
 
                 imgEl.onerror = () => {
-                    // Fallback to drive download stream if lh3 is blocked
-                    imgEl.src = downloadUrl;
+                    if (!fileUrl) {
+                        // Fallback to drive download stream if lh3 is blocked
+                        imgEl.src = downloadUrl;
+                    } else {
+                        spinner.classList.add('spinner-hidden');
+                        mediaContainer.innerHTML = '<p style="color: var(--primary); font-size: 0.9rem; padding: 20px; text-align: center;">Error loading image preview. Try downloading it directly using the button below.</p>';
+                    }
                 };
 
                 mediaContainer.appendChild(imgEl);
