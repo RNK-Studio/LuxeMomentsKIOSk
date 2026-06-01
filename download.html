@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Download Your Photo | LuxeMoments</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --primary: #ec4899;
+            --primary-hover: #db2777;
+            --secondary: #3b82f6;
+            --accent: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(20px);
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, var(--bg-dark), var(--bg-darker));
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Decorative blur backgrounds */
+        .bg-glow-1 {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(0,0,0,0) 70%);
+            top: 10%;
+            left: -100px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0,0,0,0) 70%);
+            bottom: 10%;
+            right: -100px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+            filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.15));
+        }
+
+        .brand-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            width: 100%;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-container {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .preview-container.vertical-aspect {
+            aspect-ratio: 2/3;
+        }
+
+        .preview-media {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .preview-media.loaded {
+            opacity: 1;
+        }
+
+        /* Spinner */
+        .spinner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-hidden {
+            display: none;
+        }
+
+        /* Buttons */
+        .btn-download {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--text-main);
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 16px 24px;
+            border-radius: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 24px -6px rgba(236, 72, 153, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download:active {
+            transform: scale(0.98);
+            box-shadow: 0 4px 12px -3px rgba(236, 72, 153, 0.4);
+        }
+
+        /* Instruction Box */
+        .instruction-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 16px;
+            width: 100%;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .instruction-box strong {
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .instruction-box ul {
+            padding-left: 18px;
+            margin-top: 6px;
+        }
+
+        .instruction-box li {
+            margin-bottom: 4px;
+        }
+
+        footer {
+            margin-top: 32px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <div class="container">
+        <header>
+            <h1 class="brand-title">LuxeMoments</h1>
+            <p class="brand-subtitle">Photobooth Gallery</p>
+        </header>
+
+        <div class="card">
+            <!-- Media Preview -->
+            <div id="media-container" class="preview-container">
+                <div id="loading-spinner" class="spinner"></div>
+                <!-- Image or Video will be loaded here -->
+            </div>
+
+            <!-- Download Button -->
+            <a id="download-btn" href="#" class="btn-download" download="LuxeMoments_Photo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download Photo</span>
+            </a>
+
+            <!-- Instructions -->
+            <div class="instruction-box">
+                <strong id="instruction-title">How to Save:</strong>
+                <p id="instruction-text">Tap the Download button above to save your photo directly to your device.</p>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 LuxeMoments Kiosk. All Rights Reserved.
+        </footer>
+    </div>
+
+    <script>
+        // Parse Query Parameters
+        function getQueryParams() {
+            const params = {};
+            window.location.search.substring(1).split('&').forEach(pair => {
+                if (!pair) return;
+                const parts = pair.split('=');
+                params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '');
+            });
+            return params;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = getQueryParams();
+            const fileId = params.id;
+            const fileExt = (params.ext || 'jpg').toLowerCase();
+
+            if (!fileId) {
+                document.getElementById('media-container').innerHTML = '<p style="color: var(--primary); padding: 20px; text-align: center;">No photo ID provided. Please scan the QR code from the Photobooth screen.</p>';
+                document.getElementById('download-btn').style.display = 'none';
+                return;
+            }
+
+            const mediaContainer = document.getElementById('media-container');
+            const spinner = document.getElementById('loading-spinner');
+            const downloadBtn = document.getElementById('download-btn');
+            
+            // Set download link
+            const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            downloadBtn.href = downloadUrl;
+            
+            // Tailor UI & display based on format (video vs. image/gif)
+            const isVideo = fileExt === 'webm' || fileExt === 'mp4';
+            
+            if (isVideo) {
+                // Adjust video ratio if needed, or keep standard
+                const videoEl = document.createElement('video');
+                videoEl.className = 'preview-media';
+                videoEl.src = downloadUrl;
+                videoEl.autoplay = true;
+                videoEl.loop = true;
+                videoEl.muted = true;
+                videoEl.playsInline = true;
+                videoEl.controls = true; // Provide playback controls for guest convenience
+                
+                videoEl.onloadeddata = () => {
+                    spinner.classList.add('spinner-hidden');
+                    videoEl.classList.add('loaded');
+                };
+
+                videoEl.onerror = () => {
+                    spinner.classList.add('spinner-hidden');
+                    mediaContainer.innerHTML = '<p style="color: var(--primary); font-size: 0.9rem; padding: 20px; text-align: center;">Error loading preview. You can still download it directly using the button below.</p>';
+                };
+
+                mediaContainer.appendChild(videoEl);
+                downloadBtn.querySelector('span').innerText = 'Download Video';
+                downloadBtn.download = `LuxeMoments_Video.${fileExt}`;
+            } else {
+                // Image or GIF
+                const imgEl = document.createElement('img');
+                imgEl.className = 'preview-media';
+                
+                // Use Google direct image rendering endpoint (bypasses HTML wrapping, loads directly in img)
+                imgEl.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+                imgEl.alt = 'Your Photobooth Capture';
+
+                // Check aspect ratio of photo to size card preview box nicely
+                imgEl.onload = () => {
+                    spinner.classList.add('spinner-hidden');
+                    imgEl.classList.add('loaded');
+                    if (imgEl.naturalHeight > imgEl.naturalWidth) {
+                        mediaContainer.classList.add('vertical-aspect');
+                    }
+                };
+
+                imgEl.onerror = () => {
+                    // Fallback to drive download stream if lh3 is blocked
+                    imgEl.src = downloadUrl;
+                };
+
+                mediaContainer.appendChild(imgEl);
+                downloadBtn.querySelector('span').innerText = isGif(fileExt) ? 'Download GIF' : 'Download Photo';
+                downloadBtn.download = `LuxeMoments_Photo.${fileExt}`;
+            }
+
+            function isGif(ext) {
+                return ext === 'gif';
+            }
+
+            // Detect Device OS and show optimized instructions
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isiOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+            
+            const instructionTitle = document.getElementById('instruction-title');
+            const instructionText = document.getElementById('instruction-text');
+
+            if (isiOS) {
+                instructionTitle.innerText = "📱 Apple iOS Instructions:";
+                if (isVideo) {
+                    instructionText.innerHTML = "Tap the <strong>Download Video</strong> button above, then tap <strong>Download</strong> in the Safari prompt. The video will save to your browser's Downloads folder (accessible via the blue arrow icon in the address bar, or in the Files app).";
+                } else {
+                    instructionText.innerHTML = "For the easiest save:<br><strong>Tap & hold the image</strong> in the preview box above and select <strong>'Save to Photos'</strong> or <strong>'Add to Photos'</strong>.";
+                }
+            } else {
+                instructionTitle.innerText = "📱 Android Instructions:";
+                instructionText.innerHTML = "Tap the <strong>Download</strong> button above to save the file. It will appear in your device's <strong>Downloads</strong> folder and Photos Gallery.";
+            }
+        });
+    </script>
+</body>
+</html>

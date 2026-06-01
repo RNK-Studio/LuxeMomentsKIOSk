@@ -100,8 +100,17 @@ window.driveHandler = {
             statusText.innerText = "Saved to Gallery!";
             statusIcon.classList.remove('pulse-anim');
 
-            // Generate QR Code pointing to the uploaded file
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(fileData.webViewLink)}`;
+            // Generate QR Code pointing to the custom download landing page (works for local testing and production)
+            let basePath = window.location.origin + window.location.pathname;
+            if (basePath.endsWith('index.html')) {
+                basePath = basePath.slice(0, -10);
+            }
+            if (!basePath.endsWith('/')) {
+                basePath += '/';
+            }
+            const downloadPageUrl = `${basePath}download.html?id=${fileData.id}&ext=${ext}`;
+            
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(downloadPageUrl)}`;
             qrContainer.innerHTML = `<img src="${qrUrl}" alt="QR Code to Download Photo">
                                      <p style="font-size: 0.8rem; margin-top: 5px;">Scan to Download</p>`;
             qrContainer.classList.remove('hidden');
