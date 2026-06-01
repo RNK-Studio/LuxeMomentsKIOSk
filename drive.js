@@ -108,6 +108,12 @@ window.driveHandler = {
             if (!basePath.endsWith('/')) {
                 basePath += '/';
             }
+            
+            // If running locally, fall back to live URL so phone scans work
+            if (basePath.includes('localhost') || basePath.includes('127.0.0.1')) {
+                basePath = 'https://rnk-studio.github.io/LuxeMomentsKIOSk/';
+            }
+            
             const downloadPageUrl = `${basePath}download.html?id=${fileData.id}&ext=${ext}`;
             
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(downloadPageUrl)}`;
