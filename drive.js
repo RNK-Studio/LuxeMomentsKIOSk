@@ -91,7 +91,11 @@ window.driveHandler = {
                 body: form
             });
 
-            if (!uploadRes.ok) throw new Error("Upload failed");
+            if (!uploadRes.ok) {
+                const errBody = await uploadRes.json().catch(() => ({}));
+                const errMsg = (errBody.error && errBody.error.message) || `Status ${uploadRes.status}`;
+                throw new Error(errMsg);
+            }
 
             const fileData = await uploadRes.json();
             
@@ -124,7 +128,7 @@ window.driveHandler = {
         } catch (error) {
             console.error("Error uploading to drive:", error);
             statusIcon.innerText = "❌";
-            statusText.innerText = "Upload Failed.";
+            statusText.innerText = `Upload Failed: ${error.message || error}`;
             statusIcon.classList.remove('pulse-anim');
         }
     }
